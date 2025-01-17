@@ -3,8 +3,8 @@ runner = "espflash flash --monitor"
 
 [env]
 ESP_LOG = "INFO"
-SSID = "SHADOWLANDS"
-PASSWORD = "masterkey"
+SSID = ""
+PASSWORD = ""
 
 [build]
 rustflags = [
