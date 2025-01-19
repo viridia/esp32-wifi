@@ -22,20 +22,21 @@ pub async fn get_access_point<'w>(
     controller: &mut WifiController<'w>,
 ) -> Result<ClientConfiguration, ScanError> {
     // If we specified an AP via environment variables, use that.
-    // #[allow(clippy::const_is_empty)]
-    // if !SSID.is_empty() {
-    //     let cc = ClientConfiguration {
-    //         ssid: String::from_str(SSID).unwrap(),
-    //         auth_method: if PASSWORD.is_empty() {
-    //             AuthMethod::None
-    //         } else {
-    //             AuthMethod::WPA2Personal
-    //         },
-    //         password: String::from_str(PASSWORD).unwrap(),
-    //         ..Default::default()
-    //     };
-    //     return Ok(cc);
-    // }
+    #[allow(clippy::const_is_empty)]
+    if !SSID.is_empty() {
+        let cc = ClientConfiguration {
+            ssid: String::from_str(SSID).unwrap(),
+            auth_method: if PASSWORD.is_empty() {
+                AuthMethod::None
+            } else {
+                AuthMethod::WPA2Personal
+            },
+            password: String::from_str(PASSWORD).unwrap(),
+            ..Default::default()
+        };
+        println!("Using specified AP: {}", cc.ssid);
+        return Ok(cc);
+    }
 
     println!("Starting wifi for scan");
     controller.start_async().await.unwrap();
@@ -70,7 +71,8 @@ pub async fn get_access_point<'w>(
                         ap.ssid, ap.channel, ap.signal_strength
                     );
 
-                    controller.disconnect().unwrap();
+                    // controller.disconnect().unwrap();
+                    controller.stop_async().await.unwrap();
                     return Ok(ClientConfiguration {
                         ssid: ap.ssid.clone(),
                         channel: Some(ap.channel),
@@ -106,6 +108,7 @@ pub async fn connection(mut controller: WifiController<'static>, client_config: 
         if esp_wifi::wifi::wifi_state() == WifiState::StaConnected {
             // wait until we're no longer connected
             controller.wait_for_event(WifiEvent::StaDisconnected).await;
+            println!("Wifi got disconnected, re-connecting...");
             Timer::after(Duration::from_millis(5000)).await
         }
 
